@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "664232173786",
+    "project_id": "rom-s-project",
+    "storage_bucket": "rom-s-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664232173786:android:ab891bcbbb9cd26da085e3",
+        "android_client_info": {
+          "package_name": "com.example.romsproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANL31PwPurQZ5naLeLoXntFqy1miAFyhk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

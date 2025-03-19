@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">rom\'s project</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="desk_cencel_button">Cencel</string>
+    <string name="desk_check_button">Check</string>
+    <string name="desk_account_button">Account</string>
+    <string name="desk_logo_button">Logo</string>
+
+    <string-array name="player_names">
+        <item>mark</item>
+        <item>john</item>
+        <item>melinda</item>
+        <item>george</item>
+        <item>tom</item>
+        <item>hanny</item>
+    </string-array>
+
+    <string-array name="Coin_balnces">
+        <item>8700</item>
+        <item>335</item>
+        <item>100</item>
+        <item>50</item>
+        <item>40</item>
+        <item>20</item>
+    </string-array>
+</resources>
