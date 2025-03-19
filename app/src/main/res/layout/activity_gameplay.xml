@@ -3,8 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/blackjacktable"
-    android:screenOrientation="landscape">
+    android:background="@drawable/blackjacktable">
 
     <!-- Display current coins -->
     <TextView
@@ -59,20 +58,6 @@
         android:gravity="center"
         android:textSize="14sp"/>
 
-    <!-- Display Dealer's Hand -->
-    <TextView
-        android:id="@+id/dealerHandTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Dealer's Hand"
-        android:textSize="18sp"
-        android:layout_marginTop="16dp"
-        android:padding="8dp"
-        android:textColor="#ffffff"
-        android:gravity="center"
-        android:background="#000000"
-        android:layout_gravity="center"/>
-
     <!-- Dealer's Hand Container -->
     <LinearLayout
         android:id="@+id/dealerHandContainer"
@@ -82,20 +67,6 @@
         android:gravity="center"
         android:padding="16dp">
     </LinearLayout>
-
-    <!-- Display Player's Hand -->
-    <TextView
-        android:id="@+id/playerHandTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Player's Hand"
-        android:textSize="18sp"
-        android:layout_marginTop="16dp"
-        android:padding="8dp"
-        android:textColor="#ffffff"
-        android:gravity="center"
-        android:background="#000000"
-        android:layout_gravity="center"/>
 
     <!-- Player's Hand Container -->
     <LinearLayout
@@ -107,7 +78,7 @@
         android:padding="16dp">
     </LinearLayout>
 
-    <!-- Countdown Timer TextView (placed just above the buttons) -->
+    <!-- Countdown Timer -->
     <TextView
         android:id="@+id/timerTextView"
         android:layout_width="wrap_content"

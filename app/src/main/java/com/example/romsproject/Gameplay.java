@@ -63,8 +63,7 @@ public class Gameplay extends AppCompatActivity {
         betAmountInput = findViewById(R.id.betAmountInput);
         placeBetButton = findViewById(R.id.placeBetButton);
         errorMessageTextView = findViewById(R.id.errorMessageTextView);
-        playerHandTextView = findViewById(R.id.playerHandTextView);
-        dealerHandTextView = findViewById(R.id.dealerHandTextView);
+
 
         // Initialize the hand containers
         dealerHandContainer = findViewById(R.id.dealerHandContainer);
@@ -256,11 +255,6 @@ public class Gameplay extends AppCompatActivity {
             for (int i = 0; i < player.getNumberOfHands(); i++) {
                 // Display the cards in the player's hand (reveal all cards)
                 displayCards(player.getHand(i), playerHandContainer, false);
-
-                // Optionally log when a hand has 21 (if you want this feature)
-                if (player.getHandValue(i) == 21) {
-                    Log.d("Blackjack", "Hand " + (i + 1) + " has 21! Stopping...");
-                }
             }
         }
 
@@ -273,15 +267,23 @@ public class Gameplay extends AppCompatActivity {
                 displayCards(dealerHand, dealerHandContainer, true);
             } else {
                 // Show only the first card (face-up), second card is hidden
-                List<Card> hiddenHand = new ArrayList<>();
-                hiddenHand.add(dealerHand.get(0));  // First card visible
-                hiddenHand.add(null);  // Second card hidden (represent it with null or a placeholder)
+                List<Card> dealerVisibleHand = new ArrayList<>();
+
+                // First card is visible
+                dealerVisibleHand.add(dealerHand.get(0));
+
+                // Second card is a card_back
+                Card hiddenCard = new Card(); // This creates a card back
+                dealerVisibleHand.add(hiddenCard); // Add the card back as the second card
 
                 // Display the dealer's hidden card using the placeholder logic
-                displayCards(hiddenHand, dealerHandContainer, false);
+                displayCards(dealerVisibleHand, dealerHandContainer, false);
             }
         }
     }
+
+
+
 
 
 
@@ -405,17 +407,75 @@ public class Gameplay extends AppCompatActivity {
     }
 
     private int getCardImageResource(Card card) {
-        if (card == null) {
-            return R.drawable.card_back; // Placeholder for hidden card
+        if (card == null || card.isCardBack()) {
+            return R.drawable.card_back; // Placeholder for hidden card or card_back card
         }
 
-        // Create the card name as "rank_of_suit"
-        String cardName = card.getRank().toString().toLowerCase() + "_of_" + card.getSuit().toString().toLowerCase();
+        // Get the rank value (it can be a number or face card)
+        String rankName = card.getRank();
 
-        // Return the corresponding drawable resource
+        // Convert numeric ranks to words
+        switch (rankName) {
+            case "2":
+                rankName = "two";
+                break;
+            case "3":
+                rankName = "three";
+                break;
+            case "4":
+                rankName = "four";
+                break;
+            case "5":
+                rankName = "five";
+                break;
+            case "6":
+                rankName = "six";
+                break;
+            case "7":
+                rankName = "seven";
+                break;
+            case "8":
+                rankName = "eight";
+                break;
+            case "9":
+                rankName = "nine";
+                break;
+            case "10":
+                rankName = "ten";  // Handle 10 as "ten"
+                break;
+            case "JACK":
+                rankName = "jack";
+                break;
+            case "QUEEN":
+                rankName = "queen";
+                break;
+            case "KING":
+                rankName = "king";
+                break;
+            case "ACE":
+                rankName = "ace";
+                break;
+            default:
+                // If the rank is already a word (like "two", "jack"), keep it unchanged
+                break;
+        }
+
+        // Get the suit name and convert it to lowercase
+        String suitName = card.getSuit().toLowerCase(); // Ensure suit name is in lowercase
+
+        // Create the card name as "rank_of_suit" (e.g., "two_of_clubs", "jack_of_spades")
+        String cardName = rankName + "_of_" + suitName;
+
+        // Return the corresponding drawable resource by using the created card name
         int resId = getResources().getIdentifier(cardName, "drawable", getPackageName());
-        return resId;
+
+        // Return the image resource ID or a default if not found
+        return resId != 0 ? resId : R.drawable.card_back;  // Use card_back as fallback if no resource found
     }
+
+
+
+
 
     // Helper method to display cards as images in a container
     private void displayCards(List<Card> hand, LinearLayout container, boolean revealCards) {
@@ -424,24 +484,27 @@ public class Gameplay extends AppCompatActivity {
         for (Card card : hand) {
             ImageView cardImageView = new ImageView(this);
 
-            // If the card is null (for hidden cards), show a placeholder
             if (card == null && !revealCards) {
-                cardImageView.setImageResource(R.drawable.card_back);  // A placeholder image for the hidden card
+                cardImageView.setImageResource(R.drawable.card_back);
             } else {
-                // Otherwise, display the actual card image
-                int cardImageResId = getCardImageResource(card);  // Get the image resource for the card
+                int cardImageResId = getCardImageResource(card);
                 cardImageView.setImageResource(cardImageResId);
             }
 
-            // Set layout parameters for the image (optional, you can customize this)
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-            params.setMargins(8, 0, 8, 0); // Set margins for spacing between the cards
+            // Adjust card size dynamically based on screen size
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(150, LinearLayout.LayoutParams.WRAP_CONTENT);
+            params.setMargins(8, 0, 8, 0);
             cardImageView.setLayoutParams(params);
 
-            // Add the image to the container
+            // Ensure images scale properly
+            cardImageView.setAdjustViewBounds(true);
+            cardImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
             container.addView(cardImageView);
         }
     }
+
+
 
 
 
