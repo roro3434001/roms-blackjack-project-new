@@ -19,6 +19,12 @@ import java.util.List;
 
 import android.os.CountDownTimer;
 
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import java.util.List;
+import java.util.ArrayList;
+import android.util.Log;
+
 public class Gameplay extends AppCompatActivity {
 
     private TextView currentCoinsTextView, errorMessageTextView, playerHandTextView, dealerHandTextView, resultText;
@@ -38,6 +44,9 @@ public class Gameplay extends AppCompatActivity {
     private TextView timerTextView; // UI element to display the countdown
     private static final int TURN_TIME_LIMIT = 30000; // 30 seconds
 
+    private LinearLayout dealerHandContainer, playerHandContainer;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +56,7 @@ public class Gameplay extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         mUserRef = FirebaseDatabase.getInstance().getReference("users").child(mAuth.getCurrentUser().getUid());
 
+        // Initialize views
         timerTextView = findViewById(R.id.timerTextView); // Ensure you add this TextView in XML
 
         currentCoinsTextView = findViewById(R.id.currentCoinsTextView);
@@ -56,6 +66,11 @@ public class Gameplay extends AppCompatActivity {
         playerHandTextView = findViewById(R.id.playerHandTextView);
         dealerHandTextView = findViewById(R.id.dealerHandTextView);
 
+        // Initialize the hand containers
+        dealerHandContainer = findViewById(R.id.dealerHandContainer);
+        playerHandContainer = findViewById(R.id.playerHandContainer);
+
+        // Initialize buttons
         btnHit = findViewById(R.id.btn_hit);
         btnStand = findViewById(R.id.btn_stand);
         btnSplit = findViewById(R.id.btn_split);
@@ -63,6 +78,7 @@ public class Gameplay extends AppCompatActivity {
 
         fetchUserCoins();
 
+        // Set click listeners for the buttons
         placeBetButton.setOnClickListener(v -> placeBet());
         btnHit.setOnClickListener(v -> hit());
         btnStand.setOnClickListener(v -> stand());
@@ -71,6 +87,7 @@ public class Gameplay extends AppCompatActivity {
 
         setGameplayButtonsEnabled(false);
     }
+
 
     private void fetchUserCoins() {
         mUserRef.child("coins").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -232,38 +249,40 @@ public class Gameplay extends AppCompatActivity {
 
     private void updateHandDisplay(boolean revealDealer) {
         if (player != null) {
-            StringBuilder playerHandString = new StringBuilder();
+            // Clear the player hand container before adding new cards
+            playerHandContainer.removeAllViews();
 
-            // Add notification for which hand is being played
-            playerHandString.append("Player's Hand " + (game.getCurrentHandIndex() + 1) + ":\n");
-
+            // Display each hand for the player
             for (int i = 0; i < player.getNumberOfHands(); i++) {
-                // Separate display for each hand, show value
-                playerHandString.append("Hand ").append(i + 1).append(": ")
-                        .append(formatHand(player.getHand(i)))
-                        .append(" (").append(player.getHandValue(i)).append(")\n");
+                // Display the cards in the player's hand (reveal all cards)
+                displayCards(player.getHand(i), playerHandContainer, false);
 
-                // Show notification when a hand gets 21
+                // Optionally log when a hand has 21 (if you want this feature)
                 if (player.getHandValue(i) == 21) {
-                    playerHandString.append("This hand has 21! Stopping...\n");
+                    Log.d("Blackjack", "Hand " + (i + 1) + " has 21! Stopping...");
                 }
             }
-
-            playerHandTextView.setText(playerHandString.toString());
         }
 
         if (dealerHand != null) {
+            // Clear the dealer hand container before adding new cards
+            dealerHandContainer.removeAllViews();
+
             if (revealDealer) {
-                // Show full dealer hand and value when revealed
-                int dealerHandValue = game.getDealer().getHandValue(0);
-                dealerHandTextView.setText("Dealer: " + formatHand(dealerHand) + " (" + dealerHandValue + ")");
+                // Show full dealer hand and reveal all cards when the dealer's hand is revealed
+                displayCards(dealerHand, dealerHandContainer, true);
             } else {
-                // Show only the first card, second card hidden
-                String hiddenDealerHand = dealerHand.get(0).getRank() + " of " + dealerHand.get(0).getSuit() + ", ???";
-                dealerHandTextView.setText("Dealer: " + hiddenDealerHand + " (Hidden)");
+                // Show only the first card (face-up), second card is hidden
+                List<Card> hiddenHand = new ArrayList<>();
+                hiddenHand.add(dealerHand.get(0));  // First card visible
+                hiddenHand.add(null);  // Second card hidden (represent it with null or a placeholder)
+
+                // Display the dealer's hidden card using the placeholder logic
+                displayCards(hiddenHand, dealerHandContainer, false);
             }
         }
     }
+
 
 
     private String formatHand(List<Card> hand) {
@@ -384,5 +403,46 @@ public class Gameplay extends AppCompatActivity {
             }
         }.start();
     }
+
+    private int getCardImageResource(Card card) {
+        if (card == null) {
+            return R.drawable.card_back; // Placeholder for hidden card
+        }
+
+        // Create the card name as "rank_of_suit"
+        String cardName = card.getRank().toString().toLowerCase() + "_of_" + card.getSuit().toString().toLowerCase();
+
+        // Return the corresponding drawable resource
+        int resId = getResources().getIdentifier(cardName, "drawable", getPackageName());
+        return resId;
+    }
+
+    // Helper method to display cards as images in a container
+    private void displayCards(List<Card> hand, LinearLayout container, boolean revealCards) {
+        container.removeAllViews(); // Clear previous cards from the container
+
+        for (Card card : hand) {
+            ImageView cardImageView = new ImageView(this);
+
+            // If the card is null (for hidden cards), show a placeholder
+            if (card == null && !revealCards) {
+                cardImageView.setImageResource(R.drawable.card_back);  // A placeholder image for the hidden card
+            } else {
+                // Otherwise, display the actual card image
+                int cardImageResId = getCardImageResource(card);  // Get the image resource for the card
+                cardImageView.setImageResource(cardImageResId);
+            }
+
+            // Set layout parameters for the image (optional, you can customize this)
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+            params.setMargins(8, 0, 8, 0); // Set margins for spacing between the cards
+            cardImageView.setLayoutParams(params);
+
+            // Add the image to the container
+            container.addView(cardImageView);
+        }
+    }
+
+
 
 }

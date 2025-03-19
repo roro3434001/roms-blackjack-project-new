@@ -59,20 +59,6 @@
         android:gravity="center"
         android:textSize="14sp"/>
 
-    <!-- Display Player's Hand -->
-    <TextView
-        android:id="@+id/playerHandTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Player's Hand"
-        android:textSize="18sp"
-        android:layout_marginTop="16dp"
-        android:padding="8dp"
-        android:textColor="#ffffff"
-        android:gravity="center"
-        android:background="#000000"
-        android:layout_gravity="center"/>
-
     <!-- Display Dealer's Hand -->
     <TextView
         android:id="@+id/dealerHandTextView"
@@ -87,16 +73,39 @@
         android:background="#000000"
         android:layout_gravity="center"/>
 
-    <!-- Game Area (where cards will be shown) -->
-    <FrameLayout
-        android:id="@+id/game_area"
+    <!-- Dealer's Hand Container -->
+    <LinearLayout
+        android:id="@+id/dealerHandContainer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:gravity="center"
         android:padding="16dp">
-        <!-- Cards and dealer/player hands go here -->
-    </FrameLayout>
+    </LinearLayout>
+
+    <!-- Display Player's Hand -->
+    <TextView
+        android:id="@+id/playerHandTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Player's Hand"
+        android:textSize="18sp"
+        android:layout_marginTop="16dp"
+        android:padding="8dp"
+        android:textColor="#ffffff"
+        android:gravity="center"
+        android:background="#000000"
+        android:layout_gravity="center"/>
+
+    <!-- Player's Hand Container -->
+    <LinearLayout
+        android:id="@+id/playerHandContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp">
+    </LinearLayout>
 
     <!-- Countdown Timer TextView (placed just above the buttons) -->
     <TextView
