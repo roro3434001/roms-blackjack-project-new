@@ -1,10 +1,12 @@
 package com.example.romsproject.fragments;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,6 +24,9 @@ import androidx.fragment.app.Fragment;
 import com.example.romsproject.FirebaseAuthHelper;
 import com.example.romsproject.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseUser;
@@ -36,9 +41,6 @@ public class ProfilePage extends Fragment {
     private TextView coinBalanceTextView;
     private TextView userCountryTextView; // TextView for displaying country
     private FusedLocationProviderClient fusedLocationClient;
-
-    // This will hold the country information
-    private String country = "";
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
 
@@ -67,51 +69,86 @@ public class ProfilePage extends Fragment {
     }
 
     private void getCountryOfOrigin() {
-        // Check for location permissions
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // Request permission if not granted
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        if (!isLocationEnabled()) {
+            Toast.makeText(requireContext(), "Please enable location services", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
-            // Permission already granted, fetch location
             fetchLocation();
         }
     }
 
     private void fetchLocation() {
-        // Check again in case permission was revoked after request
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // Fetch the last known location
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
             fusedLocationClient.getLastLocation()
                     .addOnSuccessListener(requireActivity(), new OnSuccessListener<Location>() {
                         @Override
                         public void onSuccess(Location location) {
                             if (location != null) {
-                                // Use Geocoder to get country name
-                                Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
-                                try {
-                                    List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                                    if (addresses != null && !addresses.isEmpty()) {
-                                        Address address = addresses.get(0);
-                                        country = address.getCountryName();
-                                        Log.d("Location", "Country: " + country);
-
-                                        // Update TextView with country name
-                                        userCountryTextView.setText("Location: " + country);
-                                    } else {
-                                        Log.d("Location", "No address found for the location");
-                                    }
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                    Log.e("LocationError", "Geocoder IOException", e);
-                                    Toast.makeText(requireContext(), "Error getting location", Toast.LENGTH_SHORT).show();
-                                }
+                                getCountryFromLocation(location);
+                            } else {
+                                requestNewLocation();
                             }
                         }
                     });
         } else {
-            // Handle case where permission is not granted (this should be covered by the requestPermissions logic)
             Toast.makeText(requireContext(), "Permission denied. Can't fetch location.", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void requestNewLocation() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.e("Location", "Permission denied for location updates.");
+            return;
+        }
+
+        LocationRequest locationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(10000)
+                .setFastestInterval(5000)
+                .setNumUpdates(1);
+
+        fusedLocationClient.requestLocationUpdates(locationRequest, new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult != null && locationResult.getLocations().size() > 0) {
+                    Location location = locationResult.getLastLocation();
+                    getCountryFromLocation(location);
+                }
+            }
+        }, null);
+    }
+
+
+    private void getCountryFromLocation(Location location) {
+        Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                String country = addresses.get(0).getCountryName();
+                Log.d("Location", "Country: " + country);
+                userCountryTextView.setText(country);
+            } else {
+                Log.d("Location", "No address found for the location");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e("LocationError", "Geocoder IOException", e);
+            Toast.makeText(requireContext(), "Error getting location", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean isLocationEnabled() {
+        LocationManager locationManager = (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
 
     @Override
@@ -120,24 +157,20 @@ public class ProfilePage extends Fragment {
 
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, now fetch location
                 fetchLocation();
             } else {
-                // Permission denied, handle accordingly
                 Toast.makeText(requireContext(), "Permission denied. Can't fetch location.", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-    // Fetch and display user's coin balance
     private void fetchAndDisplayCoinBalance() {
         FirebaseAuthHelper authHelper = new FirebaseAuthHelper();
         FirebaseUser currentUser = authHelper.getCurrentUser();
 
         if (currentUser != null) {
-            String uid = currentUser.getUid(); // Get the logged-in user's UID
+            String uid = currentUser.getUid();
 
-            // Use the fetchUserCoins method from FirebaseAuthHelper
             authHelper.fetchCoinBalance(uid, coins -> {
                 if (coins != 0) {
                     coinBalanceTextView.setText(coins + " Coins");
