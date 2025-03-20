@@ -1,6 +1,7 @@
 package com.example.romsproject;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -251,9 +252,8 @@ public class Gameplay extends AppCompatActivity {
             // Clear the player hand container before adding new cards
             playerHandContainer.removeAllViews();
 
-            // Display each hand for the player
+            // Display each hand for the player (immediately)
             for (int i = 0; i < player.getNumberOfHands(); i++) {
-                // Display the cards in the player's hand (reveal all cards)
                 displayCards(player.getHand(i), playerHandContainer, false);
             }
         }
@@ -263,27 +263,29 @@ public class Gameplay extends AppCompatActivity {
             dealerHandContainer.removeAllViews();
 
             if (revealDealer) {
-                // Show full dealer hand and reveal all cards when the dealer's hand is revealed
-                displayCards(dealerHand, dealerHandContainer, true);
+                // Reveal dealer's cards one by one with a delay
+                Handler handler = new Handler();
+                for (int i = 0; i < dealerHand.size(); i++) {
+                    final int index = i;
+                    handler.postDelayed(() -> {
+                        dealerHandContainer.removeAllViews(); // Clear before updating
+                        displayCards(dealerHand.subList(0, index + 1), dealerHandContainer, true);
+                    }, 1000 * index); // Delay each card by 1 second
+                }
             } else {
-                // Show only the first card (face-up), second card is hidden
+                // Only show the first card (dealer's visible card) and hide the second card (back of the card)
                 List<Card> dealerVisibleHand = new ArrayList<>();
+                dealerVisibleHand.add(dealerHand.get(0)); // Show only the first card
 
-                // First card is visible
-                dealerVisibleHand.add(dealerHand.get(0));
+                // Create a hidden card (back of the card) for the second card
+                Card hiddenCard = new Card();  // Creating the hidden card (card back)
+                dealerVisibleHand.add(hiddenCard); // Add it to the list
 
-                // Second card is a card_back
-                Card hiddenCard = new Card(); // This creates a card back
-                dealerVisibleHand.add(hiddenCard); // Add the card back as the second card
-
-                // Display the dealer's hidden card using the placeholder logic
-                displayCards(dealerVisibleHand, dealerHandContainer, false);
+                // Show the first card and hide the second card
+                displayCards(dealerVisibleHand, dealerHandContainer, false); // Set revealCards to false to hide the second card
             }
         }
     }
-
-
-
 
 
 
@@ -351,12 +353,16 @@ public class Gameplay extends AppCompatActivity {
             Toast.makeText(Gameplay.this, "You lose. Better luck next time!", Toast.LENGTH_SHORT).show();
         }
 
+        // Update the coins in Firebase (this will reflect changes for the user)
+        updateCoinsInFirebase(playerWon, isBlackjack);
+
         setGameplayButtonsEnabled(false);
         placeBetButton.setEnabled(true);
         placeBetButton.setVisibility(View.VISIBLE);
         betAmountInput.setEnabled(true);
         betAmountInput.setVisibility(View.VISIBLE);
     }
+
 
 
 
@@ -375,6 +381,7 @@ public class Gameplay extends AppCompatActivity {
 
         updateCoinsDisplay(); // Ensure UI reflects the updated coin count
     }
+
 
 
 
@@ -484,10 +491,11 @@ public class Gameplay extends AppCompatActivity {
         for (Card card : hand) {
             ImageView cardImageView = new ImageView(this);
 
-            if (card == null && !revealCards) {
-                cardImageView.setImageResource(R.drawable.card_back);
+            // If the card is a "card_back" card and we're not revealing it, show the card back
+            if (card.isCardBack() && !revealCards) {
+                cardImageView.setImageResource(R.drawable.card_back);  // Use your card back image here
             } else {
-                int cardImageResId = getCardImageResource(card);
+                int cardImageResId = getCardImageResource(card);  // Get the image resource for the card
                 cardImageView.setImageResource(cardImageResId);
             }
 
@@ -503,6 +511,7 @@ public class Gameplay extends AppCompatActivity {
             container.addView(cardImageView);
         }
     }
+
 
 
 

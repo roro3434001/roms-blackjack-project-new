@@ -24,17 +24,20 @@ public class Game {
         deck.shuffleDeck();
         currentHandIndex = 0; // Reset hand index for new round
 
-        // Deal two cards to player and dealer
+        // Deal two cards to player
         player.addCard(deck.drawCard());
         player.addCard(deck.drawCard());
-        dealer.addCard(deck.drawCard());
-        dealer.addCard(deck.drawCard());
+
+        // Deal two cards to dealer: one hidden ("card_back") and one visible
+        dealer.addCard(new Card()); // Hidden card for dealer (card_back)
+        dealer.addCard(deck.drawCard()); // Visible card for dealer
 
         // If player gets 21 from initial deal, their turn ends immediately
         if (player.getHandValue() == 21) {
             playerStands();
         }
     }
+
 
     public void playerHits() {
         if (!isGameOver) {
